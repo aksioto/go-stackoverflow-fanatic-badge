@@ -9,14 +9,16 @@ import (
 type BadgeUsecase struct {
 	seleniumService *selenium.SeleniumService
 	url             string
+	urlAlt          string
 	email           string
 	pass            string
 }
 
-func NewBadgeUsecase(seleniumService *selenium.SeleniumService, url, email, pass string) *BadgeUsecase {
+func NewBadgeUsecase(seleniumService *selenium.SeleniumService, url, urlAlt, email, pass string) *BadgeUsecase {
 	return &BadgeUsecase{
 		seleniumService: seleniumService,
 		url:             url,
+		urlAlt:          urlAlt,
 		email:           email,
 		pass:            pass,
 	}
@@ -46,6 +48,15 @@ func (u *BadgeUsecase) GoBrrr() {
 		}),
 		PipelineJob(func(el *selenium.Element) (*selenium.Element, error) {
 			return nil, el.Click()
+		}),
+		PipelineJob(func(el *selenium.Element) (*selenium.Element, error) {
+			return u.seleniumService.FindElementByCssSelector(".s-user-card")
+		}),
+		PipelineJob(func(el *selenium.Element) (*selenium.Element, error) {
+			return nil, el.Click()
+		}),
+		PipelineJob(func(el *selenium.Element) (*selenium.Element, error) {
+			return nil, u.seleniumService.OpenUrl(u.urlAlt)
 		}),
 		PipelineJob(func(el *selenium.Element) (*selenium.Element, error) {
 			return u.seleniumService.FindElementByCssSelector(".s-user-card")
