@@ -61,6 +61,9 @@ func (u *BadgeUsecase) GoBrrr() {
 		PipelineJob(func(el *selenium.Element) (*selenium.Element, error) {
 			return u.seleniumService.FindElementByCssSelector(".s-user-card")
 		}),
+		PipelineJob(func(el *selenium.Element) (*selenium.Element, error) {
+			return nil, el.Click()
+		}),
 	}
 
 	if err := executePipeline(simpleFlowJobs...); err != nil {
