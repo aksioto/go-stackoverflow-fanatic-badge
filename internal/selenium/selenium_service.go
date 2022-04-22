@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/tebeka/selenium"
+	"log"
 	"os"
 )
 
@@ -37,17 +38,17 @@ func (s *SeleniumService) Start() {
 		selenium.Output(os.Stderr),              // Output debug information to STDERR.
 	}
 
-	//selenium.SetDebug(true)
+	selenium.SetDebug(s.debug)
 	service, err := selenium.NewSeleniumService(s.seleniumPath, s.port, opts...)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 	s.service = service
 
 	caps := selenium.Capabilities{"browserName": "firefox"}
 	wd, err := selenium.NewRemote(caps, fmt.Sprintf("http://localhost:%d/wd/hub", s.port))
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 	s.webDriver = wd
 }
@@ -67,7 +68,7 @@ func (s *SeleniumService) OpenUrl(url string) error {
 func (s *SeleniumService) FindElementByCssSelector(selector string) (*Element, error) {
 	el, err := s.webDriver.FindElement(selenium.ByCSSSelector, selector)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 
 		if s.IsRecaptcha() {
 			return &Element{webElement: nil}, errors.New("ReCaptcha")
@@ -82,7 +83,7 @@ func (s *SeleniumService) IsRecaptcha() bool {
 
 	el, err := s.webDriver.FindElement(selenium.ByCSSSelector, captcha)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 
 	return el != nil
