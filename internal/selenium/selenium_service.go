@@ -1,4 +1,4 @@
-package main
+package selenium
 
 import (
 	"errors"
@@ -7,37 +7,49 @@ import (
 	"os"
 )
 
-type SeleniumService struct {
-	service   *selenium.Service
-	webDriver selenium.WebDriver
-}
-
 type Element struct {
 	webElement selenium.WebElement
 }
 
-func StartSelenium(seleniumPath, geckoDriverPath string, port int) *SeleniumService {
+type SeleniumService struct {
+	debug           bool
+	seleniumPath    string
+	geckoDriverPath string
+	port            int
+	service         *selenium.Service
+	webDriver       selenium.WebDriver
+}
+
+func NewSeleniumService(debug bool, seleniumPath string, geckoDriverPath string, port int) *SeleniumService {
+	return &SeleniumService{
+		debug:           debug,
+		seleniumPath:    seleniumPath,
+		geckoDriverPath: geckoDriverPath,
+		port:            port,
+		//service
+		//webDriver
+	}
+}
+
+func (s *SeleniumService) Start() {
 	opts := []selenium.ServiceOption{
-		selenium.GeckoDriver(geckoDriverPath), // Specify the path to GeckoDriver in order to use Firefox.
-		selenium.Output(os.Stderr),            // Output debug information to STDERR.
+		selenium.GeckoDriver(s.geckoDriverPath), // Specify the path to GeckoDriver in order to use Firefox.
+		selenium.Output(os.Stderr),              // Output debug information to STDERR.
 	}
 
 	//selenium.SetDebug(true)
-	service, err := selenium.NewSeleniumService(seleniumPath, port, opts...)
+	service, err := selenium.NewSeleniumService(s.seleniumPath, s.port, opts...)
 	if err != nil {
 		fmt.Println(err)
 	}
-	//defer service.Stop()
+	s.service = service
+
 	caps := selenium.Capabilities{"browserName": "firefox"}
-	wd, err := selenium.NewRemote(caps, fmt.Sprintf("http://localhost:%d/wd/hub", port))
+	wd, err := selenium.NewRemote(caps, fmt.Sprintf("http://localhost:%d/wd/hub", s.port))
 	if err != nil {
 		fmt.Println(err)
 	}
-	//defer wd.Quit()
-	return &SeleniumService{
-		service:   service,
-		webDriver: wd,
-	}
+	s.webDriver = wd
 }
 
 func (s *SeleniumService) Stop() {
@@ -51,6 +63,7 @@ func (s *SeleniumService) OpenUrl(url string) error {
 	}
 	return nil
 }
+
 func (s *SeleniumService) FindElementByCssSelector(selector string) (*Element, error) {
 	el, err := s.webDriver.FindElement(selenium.ByCSSSelector, selector)
 	if err != nil {
@@ -64,13 +77,6 @@ func (s *SeleniumService) FindElementByCssSelector(selector string) (*Element, e
 	return &Element{webElement: el}, err
 }
 
-func (e *Element) SendKeys(keys string) error {
-	return e.webElement.SendKeys(keys)
-}
-func (e *Element) Click() error {
-	return e.webElement.Click()
-}
-
 func (s *SeleniumService) IsRecaptcha() bool {
 	const captcha = "#nocaptcha-form"
 
@@ -80,4 +86,12 @@ func (s *SeleniumService) IsRecaptcha() bool {
 	}
 
 	return el != nil
+}
+
+func (e *Element) SendKeys(keys string) error {
+	return e.webElement.SendKeys(keys)
+}
+
+func (e *Element) Click() error {
+	return e.webElement.Click()
 }
