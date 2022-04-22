@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/tebeka/selenium"
+	"github.com/tebeka/selenium/firefox"
 	"log"
 	"os"
 )
@@ -14,6 +15,7 @@ type Element struct {
 
 type SeleniumService struct {
 	debug           bool
+	headless        bool
 	seleniumPath    string
 	geckoDriverPath string
 	port            int
@@ -21,9 +23,10 @@ type SeleniumService struct {
 	webDriver       selenium.WebDriver
 }
 
-func NewSeleniumService(debug bool, seleniumPath string, geckoDriverPath string, port int) *SeleniumService {
+func NewSeleniumService(debug bool, seleniumPath string, geckoDriverPath string, port int, headless bool) *SeleniumService {
 	return &SeleniumService{
 		debug:           debug,
+		headless:        headless,
 		seleniumPath:    seleniumPath,
 		geckoDriverPath: geckoDriverPath,
 		port:            port,
@@ -46,6 +49,14 @@ func (s *SeleniumService) Start() {
 	s.service = service
 
 	caps := selenium.Capabilities{"browserName": "firefox"}
+
+	if s.headless {
+		firefoxCaps := firefox.Capabilities{
+			Args: []string{"--headless"},
+		}
+		caps.AddFirefox(firefoxCaps)
+	}
+
 	wd, err := selenium.NewRemote(caps, fmt.Sprintf("http://localhost:%d/wd/hub", s.port))
 	if err != nil {
 		log.Println(err)

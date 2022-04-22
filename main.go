@@ -13,12 +13,14 @@ type SeleniumConfig struct {
 	SeleniumPath    string `env:"SELENIUM_PATH,required"`
 	GeckoDriverPath string `env:"GECKO_DRIVER_PATH,required"`
 	Port            int    `env:"PORT,required"`
+	Headless        bool   `env:"HEADLESS,required"`
 }
 
 type StackoverflowConfig struct {
-	Url   string `env:"SO_URL,required"`
-	Email string `env:"SO_EMAIL,required"`
-	Pass  string `env:"SO_PASS,required"`
+	Url    string `env:"SO_URL,required"`
+	UrlAlt string `env:"SO_URL_ALT,required"`
+	Email  string `env:"SO_EMAIL,required"`
+	Pass   string `env:"SO_PASS,required"`
 }
 
 type Config struct {
@@ -38,11 +40,13 @@ func main() {
 	}
 
 	// services
-	seleniumService := selenium.NewSeleniumService(cfg.Debug, cfg.SeleniumPath, cfg.GeckoDriverPath, cfg.Port)
+	seleniumService := selenium.NewSeleniumService(cfg.Debug, cfg.SeleniumPath, cfg.GeckoDriverPath, cfg.Port, cfg.Headless)
 	// usecase
-	badgeUsecase := usecase.NewBadgeUsecase(seleniumService, cfg.Url, cfg.Email, cfg.Pass)
+	badgeUsecase := usecase.NewBadgeUsecase(seleniumService, cfg.Url, cfg.UrlAlt, cfg.Email, cfg.Pass)
 
 	badgeUsecase.GoBrrr()
+
+	log.Println("All done")
 }
 
 func igniteConfig(appConfig interface{}) error {
