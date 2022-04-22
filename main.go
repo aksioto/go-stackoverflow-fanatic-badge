@@ -1,105 +1,61 @@
 package main
 
 import (
-	"fmt"
-	"math/rand"
-	"time"
+	"github.com/aksioto/go-stackoverflow-fanatic-badge/internal/selenium"
+	"github.com/aksioto/go-stackoverflow-fanatic-badge/usecase"
+	"github.com/caarlos0/env"
+	"github.com/joho/godotenv"
+	"github.com/pkg/errors"
+	"log"
 )
 
-const (
-	seleniumPath    = "binaries/selenium-server.jar"
-	geckoDriverPath = "binaries/geckodriver.exe"
-	port            = 8080
-)
-const (
-	soUrl  = "https://stackoverflow.com/users/login"
-	soUser = ""
-	soPass = ""
-)
+type SeleniumConfig struct {
+	SeleniumPath    string `env:"SELENIUM_PATH,required"`
+	GeckoDriverPath string `env:"GECKO_DRIVER_PATH,required"`
+	Port            int    `env:"PORT,required"`
+}
 
-var service *SeleniumService
+type StackoverflowConfig struct {
+	Url   string `env:"SO_URL,required"`
+	Email string `env:"SO_EMAIL,required"`
+	Pass  string `env:"SO_PASS,required"`
+}
+
+type Config struct {
+	Debug bool `env:"DEBUG,required"`
+	*SeleniumConfig
+	*StackoverflowConfig
+}
 
 func main() {
-	//TODO: implement env vars
-	Init()
-}
-
-func Init() {
-	service = StartSelenium(seleniumPath, geckoDriverPath, port)
-
-	simpleFlowJobs := []PipelineJob{
-		PipelineJob(func(el *Element) (*Element, error) {
-			return nil, service.OpenUrl(soUrl)
-		}),
-		PipelineJob(func(el *Element) (*Element, error) {
-			return service.FindElementByCssSelector("#email")
-		}),
-		PipelineJob(func(el *Element) (*Element, error) {
-			return nil, el.SendKeys(soUser)
-		}),
-		PipelineJob(func(el *Element) (*Element, error) {
-			return service.FindElementByCssSelector("#password")
-		}),
-		PipelineJob(func(el *Element) (*Element, error) {
-			return nil, el.SendKeys(soPass)
-		}),
-		PipelineJob(func(el *Element) (*Element, error) {
-			return service.FindElementByCssSelector("#submit-button")
-		}),
-		PipelineJob(func(el *Element) (*Element, error) {
-			return nil, el.Click()
-		}),
-		PipelineJob(func(el *Element) (*Element, error) {
-			return service.FindElementByCssSelector(".s-user-card")
-		}),
-		PipelineJob(func(el *Element) (*Element, error) {
-			return nil, el.Click()
-		}),
+	cfg := &Config{
+		SeleniumConfig:      &SeleniumConfig{},
+		StackoverflowConfig: &StackoverflowConfig{},
+	}
+	err := igniteConfig(cfg)
+	if err != nil {
+		log.Fatal("Error happened on IgniteConfig", err)
 	}
 
-	if err := ExecutePipeline(simpleFlowJobs...); err != nil {
-		if HereWeGoAgain(3, simpleFlowJobs...) {
-			// TODO: implement email notification
-			fmt.Println("Ah shit!")
-		}
+	// services
+	seleniumService := selenium.NewSeleniumService(cfg.Debug, cfg.SeleniumPath, cfg.GeckoDriverPath, cfg.Port)
+	// usecase
+	badgeUsecase := usecase.NewBadgeUsecase(seleniumService, cfg.Url, cfg.Email, cfg.Pass)
+
+	badgeUsecase.GoBrrr()
+}
+
+func igniteConfig(appConfig interface{}) error {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Failed to load config, error: ", err.Error())
+		return errors.WithStack(err)
 	}
-	service.Stop()
-}
 
-func RestartSelenium() {
-	service.Stop()
-	SleepRandomTime(60, 90)
-	service = StartSelenium(seleniumPath, geckoDriverPath, port)
-}
-
-type PipelineJob func(element *Element) (*Element, error)
-
-func ExecutePipeline(jobs ...PipelineJob) error {
-	var element *Element
-	for _, job := range jobs {
-		if el, err := job(element); err != nil {
-			return err
-		} else {
-			element = el
-		}
-		SleepRandomTime(1, 10)
+	err = env.Parse(appConfig)
+	if err != nil {
+		log.Fatal("Failed to parse config, error: ", err.Error())
+		return errors.WithStack(err)
 	}
 	return nil
-}
-
-func HereWeGoAgain(attempts int, jobs ...PipelineJob) bool {
-	RestartSelenium()
-
-	for i := 0; i < attempts; i++ {
-		if err := ExecutePipeline(jobs...); err == nil {
-			return false
-		}
-	}
-	return true
-}
-
-func SleepRandomTime(min, max int) {
-	rand.Seed(time.Now().UnixNano())
-	duration := rand.Intn(max-min+1) + min
-	time.Sleep(time.Duration(duration) * time.Second)
 }
