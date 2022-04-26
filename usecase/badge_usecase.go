@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"fmt"
 	"github.com/aksioto/go-stackoverflow-fanatic-badge/internal/selenium"
 	"github.com/aksioto/go-stackoverflow-fanatic-badge/utils"
 	"log"
@@ -25,11 +26,21 @@ func NewBadgeUsecase(seleniumService *selenium.SeleniumService, url, urlAlt, ema
 }
 
 func (u *BadgeUsecase) GoBrrr() {
-	u.seleniumService.Start()
+	if err := u.seleniumService.Start(); err != nil {
+		log.Fatal("Selenium service not started. Error: ", err.Error())
+		return
+	}
 
+	//TODO: move pipeline to yaml
 	simpleFlowJobs := []PipelineJob{
 		PipelineJob(func(el *selenium.Element) (*selenium.Element, error) {
 			return nil, u.seleniumService.OpenUrl(u.url)
+		}),
+		PipelineJob(func(el *selenium.Element) (*selenium.Element, error) {
+			return u.seleniumService.FindElementByCssSelector(".js-accept-cookies")
+		}),
+		PipelineJob(func(el *selenium.Element) (*selenium.Element, error) {
+			return nil, el.Click()
 		}),
 		PipelineJob(func(el *selenium.Element) (*selenium.Element, error) {
 			return u.seleniumService.FindElementByCssSelector("#email")
@@ -79,6 +90,7 @@ func (u *BadgeUsecase) hereWeGoAgain(attempts int, jobs ...PipelineJob) bool {
 	u.restartSelenium()
 
 	for i := 0; i < attempts; i++ {
+		log.Println(fmt.Printf("[hereWeGoAgain] attempts: %o\n", i))
 		if err := executePipeline(jobs...); err == nil {
 			return false
 		}
@@ -89,7 +101,7 @@ func (u *BadgeUsecase) hereWeGoAgain(attempts int, jobs ...PipelineJob) bool {
 func (u *BadgeUsecase) restartSelenium() {
 	u.seleniumService.Stop()
 	utils.SleepRandomTime(60, 90)
-	u.seleniumService.Start()
+	_ = u.seleniumService.Start()
 }
 
 //TODO: move this
