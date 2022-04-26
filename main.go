@@ -20,22 +20,14 @@ type SeleniumConfig struct {
 	BrowserName      string `env:"BROWSER_NAME,required"`
 }
 
-type StackoverflowConfig struct {
-	Url    string `env:"SO_URL,required"`
-	UrlAlt string `env:"SO_URL_ALT,required"`
-	Email  string `env:"SO_EMAIL,required"`
-	Pass   string `env:"SO_PASS,required"`
-}
-
 type Config struct {
 	*SeleniumConfig
-	*StackoverflowConfig
+	JobsConfigPath string `env:"JOBS_CONFIG,required"`
 }
 
 func main() {
 	cfg := &Config{
-		SeleniumConfig:      &SeleniumConfig{},
-		StackoverflowConfig: &StackoverflowConfig{},
+		SeleniumConfig: &SeleniumConfig{},
 	}
 	err := igniteConfig(cfg)
 	if err != nil {
@@ -45,9 +37,9 @@ func main() {
 	// services
 	seleniumService := selenium.NewSeleniumService(cfg.BrowserName, cfg.SeleniumPath, cfg.GeckoDriverPath, cfg.ChromeDriverPath, cfg.Port, cfg.Capabilities, cfg.Debug, cfg.Output)
 	// usecase
-	badgeUsecase := usecase.NewBadgeUsecase(seleniumService, cfg.Url, cfg.UrlAlt, cfg.Email, cfg.Pass)
+	badgeUsecase := usecase.NewBadgeUsecase(seleniumService, cfg.JobsConfigPath)
 
-	badgeUsecase.GoBrrr()
+	badgeUsecase.StartEarnBadge()
 
 	log.Println("All done")
 }
