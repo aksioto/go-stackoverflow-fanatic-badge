@@ -10,10 +10,14 @@ import (
 )
 
 type SeleniumConfig struct {
-	SeleniumPath    string `env:"SELENIUM_PATH,required"`
-	GeckoDriverPath string `env:"GECKO_DRIVER_PATH,required"`
-	Port            int    `env:"PORT,required"`
-	Headless        bool   `env:"HEADLESS,required"`
+	Debug            bool   `env:"DEBUG,required"`
+	Output           bool   `env:"SELENIUM_OUTPUT,required"`
+	SeleniumPath     string `env:"SELENIUM_PATH,required"`
+	GeckoDriverPath  string `env:"GECKO_DRIVER_PATH,required"`
+	ChromeDriverPath string `env:"CHROME_DRIVER_PATH,required"`
+	Port             int    `env:"PORT,required"`
+	Capabilities     string `env:"CAPABILITIES,required"`
+	BrowserName      string `env:"BROWSER_NAME,required"`
 }
 
 type StackoverflowConfig struct {
@@ -24,7 +28,6 @@ type StackoverflowConfig struct {
 }
 
 type Config struct {
-	Debug bool `env:"DEBUG,required"`
 	*SeleniumConfig
 	*StackoverflowConfig
 }
@@ -40,7 +43,7 @@ func main() {
 	}
 
 	// services
-	seleniumService := selenium.NewSeleniumService(cfg.Debug, cfg.SeleniumPath, cfg.GeckoDriverPath, cfg.Port, cfg.Headless)
+	seleniumService := selenium.NewSeleniumService(cfg.BrowserName, cfg.SeleniumPath, cfg.GeckoDriverPath, cfg.ChromeDriverPath, cfg.Port, cfg.Capabilities, cfg.Debug, cfg.Output)
 	// usecase
 	badgeUsecase := usecase.NewBadgeUsecase(seleniumService, cfg.Url, cfg.UrlAlt, cfg.Email, cfg.Pass)
 

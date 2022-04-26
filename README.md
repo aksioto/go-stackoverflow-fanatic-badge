@@ -13,5 +13,6 @@ After that, change the path to the binaries in the `.env` file.
 
 ### TODO:
 - [x] Implement `.env` vars
-- [ ] Implement binaries auto load
-- [ ] Implement Chrome driver
+- [x] Chrome driver support
+- [ ] Binaries auto load
+- [ ] Pipeline jobs from yaml
