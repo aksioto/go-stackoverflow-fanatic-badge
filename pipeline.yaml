@@ -1,0 +1,38 @@
+jobTimeout:
+  min: 1
+  max: 10
+restartTimeout:
+  min: 60
+  max: 90
+jobs:
+  - method: OpenUrl
+    args: 'https://stackoverflow.com/users/login'
+
+  - method: FindElementByCssSelector
+    args: '.js-accept-cookies'
+  - method: Click
+
+  - method: FindElementByCssSelector
+    args: '#email'
+  - method: SendKeys
+    args: ${ SO_EMAIL }
+
+  - method: FindElementByCssSelector
+    args: '#password'
+  - method: SendKeys
+    args: ${ SO_PASS }
+
+  - method: FindElementByCssSelector
+    args: '#submit-button'
+  - method: Click
+
+  - method: FindElementByCssSelector
+    args: '.s-user-card'
+  - method: Click
+
+  - method: OpenUrl
+    args: 'https://ru.stackoverflow.com'
+
+  - method: FindElementByCssSelector
+    args: '.s-user-card'
+  - method: Click
